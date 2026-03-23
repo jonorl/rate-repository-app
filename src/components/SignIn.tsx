@@ -1,6 +1,8 @@
 import { Text, TextInput, Pressable, View, StyleSheet } from 'react-native';
 import { useFormik } from 'formik';
+import { useRouter } from 'expo-router';
 import * as yup from 'yup';
+import useSignIn from '../hooks/useSignIn'
 
 const styles = StyleSheet.create({
   container: {
@@ -53,6 +55,29 @@ const validationSchema = yup.object().shape({
 
 const SignIn = () => {
 
+  const [signIn, result] = useSignIn();
+  const router = useRouter();
+
+  const onSubmit = async (values:{username:string, password:string}) => {
+    const { username, password } = values;
+
+    try {
+      const data = await signIn({ username, password });
+      if (data) {
+        router.replace('/');
+      }
+      console.log(data);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  // const handleLogin = async () => {
+  //   const data = await signIn({ username: formik.values.username, password: formik.values.password });
+  //   const token = data?.accessToken;
+  //   // store token, navigate, etc.
+  // };
+
   const formik = useFormik({
     initialValues: {
       username: '',
@@ -60,6 +85,7 @@ const SignIn = () => {
     },
     onSubmit: values => {
       console.log(values);
+      onSubmit(values);
     },
     validationSchema,
   })
@@ -69,25 +95,25 @@ const SignIn = () => {
       <View style={styles.container}>
         <Text>Username</Text>
         <TextInput
-          style={ formik.touched.username && formik.errors.username ? styles.inputError : styles.input }
+          style={formik.touched.username && formik.errors.username ? styles.inputError : styles.input}
           placeholder="Username"
           value={formik.values.username}
           onChangeText={formik.handleChange('username')}
         />
         {formik.touched.username && formik.errors.username && (
-          <Text style={ styles.errorText }>{formik.errors.username}</Text>
+          <Text style={styles.errorText}>{formik.errors.username}</Text>
         )}
 
         <Text>Password</Text>
         <TextInput
-          style={ formik.touched.password && formik.errors.password ? styles.inputError : styles.input }
+          style={formik.touched.password && formik.errors.password ? styles.inputError : styles.input}
           placeholder="Password"
           secureTextEntry
           value={formik.values.password}
           onChangeText={formik.handleChange('password')}
         />
         {formik.touched.password && formik.errors.password && (
-          <Text style={ styles.errorText }>{formik.errors.password}</Text>
+          <Text style={styles.errorText}>{formik.errors.password}</Text>
         )}
 
         <Pressable style={styles.button} onPress={() => formik.handleSubmit()}>
