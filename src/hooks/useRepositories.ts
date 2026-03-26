@@ -23,16 +23,21 @@ interface GetRepositoriesData {
   };
 }
 
-const useRepositories = () => {
+const useRepositories = (orderBy: string, orderDirection: String, searchKeyword: String) => {
   // useQuery handles the fetching, loading state, and refetching automatically
   const { data, loading, refetch } = useQuery<GetRepositoriesData>(GET_REPOSITORIES, {
     fetchPolicy: 'cache-and-network',
+    variables: { orderBy, orderDirection, searchKeyword },
   });
 
   // Extract the repositories from the data object
   const repositories = data ? data.repositories : undefined;
 
-  return { repositories, loading, refetch };
+  return { 
+    repositories: data?.repositories, 
+    loading, 
+    refetch 
+  };
 };
 
 export default useRepositories;

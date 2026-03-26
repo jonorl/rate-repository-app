@@ -1,5 +1,4 @@
-import { Text, Image, StyleSheet } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Text, Image, StyleSheet, View, Pressable, Linking } from 'react-native';
 
 type Repositories = {
   id: string;
@@ -11,20 +10,26 @@ type Repositories = {
   ratingAverage: number;
   reviewCount: number;
   ownerAvatarUrl: string;
+  url?: string;
 }
 
 interface RepositoryItemProps {
   item: Repositories;
+  showGithubButton?: boolean;
 }
 
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'white',
     padding: 15,
+    alignSelf: 'stretch', 
+    flexDirection: 'column',
   },
   topContainer: {
     flexDirection: 'row',
     marginBottom: 15,
+    alignItems: 'flex-start', 
+    width: '100%',
   },
   logo: {
     width: 50,
@@ -33,7 +38,8 @@ const styles = StyleSheet.create({
     marginRight: 20,
   },
   contentContainer: {
-    flexShrink: 1, // Prevents text from pushing off screen
+    flex: 1,
+    flexShrink: 1,
   },
   nameText: {
     fontWeight: 'bold',
@@ -46,11 +52,13 @@ const styles = StyleSheet.create({
   },
   languageBadge: {
     backgroundColor: '#0366d6',
-    color: 'white',
-    alignSelf: 'flex-start', // Only takes up needed width
+    alignSelf: 'flex-start',
     padding: 4,
     borderRadius: 4,
     overflow: 'hidden',
+  },
+  languageBadgeText: {
+    color: 'white',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -66,40 +74,64 @@ const styles = StyleSheet.create({
   statLabel: {
     color: '#586069',
   },
+  githubButton: {
+    backgroundColor: '#0366d6',
+    padding: 12,
+    borderRadius: 4,
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  githubButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
 });
 
-// Helper to format large numbers (e.g., 1500 -> 1.5k)
 const formatCount = (count: number) => {
   return count >= 1000 ? `${(count / 1000).toFixed(1)}k` : count;
 };
 
-const RepositoryItem = ({ item }: { item: any }) => (
-  <SafeAreaProvider style={styles.container}>
-    {/* Top Section: Avatar and Header Info */}
-    <SafeAreaProvider style={styles.topContainer}>
-      <Image style={styles.logo} source={{ uri: item.ownerAvatarUrl }} />
-      <SafeAreaProvider style={styles.contentContainer}>
-        <Text style={styles.nameText}>{item.fullName}</Text>
-        <Text style={styles.descriptionText}>{item.description}</Text>
-        <Text style={styles.languageBadge}>{item.language}</Text>
-      </SafeAreaProvider>
-    </SafeAreaProvider>
+const RepositoryItem = ({ item, showGithubButton = false }: RepositoryItemProps) => {
+  console.log('ITEM DATA:', JSON.stringify(item));  // ← LOG IS HERE
 
-    {/* Bottom Section: Stats */}
-    <SafeAreaProvider style={styles.statsContainer}>
-      <StatColumn label="Stars" value={formatCount(item.stargazersCount)} />
-      <StatColumn label="Forks" value={formatCount(item.forksCount)} />
-      <StatColumn label="Reviews" value={item.reviewCount} />
-      <StatColumn label="Rating" value={item.ratingAverage} />
-    </SafeAreaProvider>
-  </SafeAreaProvider>
-);
+  return (
+    <View testID="repositoryItem" style={styles.container}>
+      <View style={styles.topContainer}>
+        <Image style={styles.logo} source={{ uri: item.ownerAvatarUrl }} />
+        <View style={styles.contentContainer}>
+          <Text style={styles.nameText}>{item.fullName}</Text>
+          <Text style={styles.descriptionText}>{item.description}</Text>
+          <View style={styles.languageBadge}>
+            <Text style={styles.languageBadgeText}>{item.language}</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.statsContainer}>
+        <StatColumn label="Stars" value={formatCount(item.stargazersCount)} />
+        <StatColumn label="Forks" value={formatCount(item.forksCount)} />
+        <StatColumn label="Reviews" value={item.reviewCount} />
+        <StatColumn label="Rating" value={item.ratingAverage} />
+      </View>
+
+      {showGithubButton && item.url && (
+        <Pressable
+          style={styles.githubButton}
+          onPress={() => Linking.openURL(item.url!)}
+        >
+          <Text style={styles.githubButtonText}>Open in GitHub</Text>
+        </Pressable>
+      )}
+    </View>
+  );
+};
 
 const StatColumn = ({ label, value }: { label: string; value: string | number }) => (
-  <SafeAreaProvider style={styles.statItem}>
+  <View style={styles.statItem}>
     <Text style={styles.statValue}>{value}</Text>
     <Text style={styles.statLabel}>{label}</Text>
-  </SafeAreaProvider>
-)
+  </View>
+);
 
 export default RepositoryItem;

@@ -1,7 +1,10 @@
-import { FlatList, View, StyleSheet } from 'react-native';
-// import { useState, useEffect } from 'react';
+import { FlatList, View, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
 import RepositoryItem from './respositoryItem';
 import useRepositories from '../hooks/useRepositories';
+import { useState } from 'react';
+import SortMenu from './SortMenu'
+import RepoSearchbar from './RepoSearchbar';
+import { useDebounce } from 'use-debounce';
 
 const styles = StyleSheet.create({
   separator: {
@@ -9,67 +12,7 @@ const styles = StyleSheet.create({
   },
 });
 
-// const repositories = [
-//   {
-//     id: 'jaredpalmer.formik',
-//     fullName: 'jaredpalmer/formik',
-//     description: 'Build forms in React, without the tears',
-//     language: 'TypeScript',
-//     forksCount: 1589,
-//     stargazersCount: 21553,
-//     ratingAverage: 88,
-//     reviewCount: 4,
-//     ownerAvatarUrl: 'https://avatars2.githubusercontent.com/u/4060187?v=4',
-//   },
-//   {
-//     id: 'rails.rails',
-//     fullName: 'rails/rails',
-//     description: 'Ruby on Rails',
-//     language: 'Ruby',
-//     forksCount: 18349,
-//     stargazersCount: 45377,
-//     ratingAverage: 100,
-//     reviewCount: 2,
-//     ownerAvatarUrl: 'https://avatars1.githubusercontent.com/u/4223?v=4',
-//   },
-//   {
-//     id: 'django.django',
-//     fullName: 'django/django',
-//     description: 'The Web framework for perfectionists with deadlines.',
-//     language: 'Python',
-//     forksCount: 21015,
-//     stargazersCount: 48496,
-//     ratingAverage: 73,
-//     reviewCount: 5,
-//     ownerAvatarUrl: 'https://avatars2.githubusercontent.com/u/27804?v=4',
-//   },
-//   {
-//     id: 'reduxjs.redux',
-//     fullName: 'reduxjs/redux',
-//     description: 'Predictable state container for JavaScript apps',
-//     language: 'TypeScript',
-//     forksCount: 13902,
-//     stargazersCount: 52869,
-//     ratingAverage: 0,
-//     reviewCount: 0,
-//     ownerAvatarUrl: 'https://avatars3.githubusercontent.com/u/13142323?v=4',
-//   },
-// ];
-
 const ItemSeparator = () => <View style={styles.separator} />;
-
-// const RepositoryList = () => {
-//   return (
-//     <FlatList
-//       data={repositories}
-//       ItemSeparatorComponent={ItemSeparator}
-//       renderItem={({ item }) => <RepositoryItem item={item} />}
-//       keyExtractor={item => item.id}
-//     />
-//   );
-// };
-
-// export default RepositoryList;
 
 interface Repository {
   id: string;
@@ -91,35 +34,84 @@ interface RepositoryData {
   edges: Edge[];
 }
 
-const RepositoryList = () => {
-  const { repositories }: { repositories: RepositoryData | undefined } = useRepositories() as { repositories: RepositoryData | undefined };;
+interface RepositoryListContainerProps {
+  repositories: RepositoryData;
+  onSortChange: (value: string) => void;
+  searchQuery: string;               // Add this
+  setSearchQuery: (value: string) => void; // Add this
+}
 
-  // const fetchRepositories = async () => {
-  //   // Replace the IP address part with your own IP address!
-  //   const response = await fetch('http://192.168.50.246:45573/api/repositories');
-  //   const json = await response.json();
-
-  //   console.log(json);
-
-  //   setRepositories(json);
-  // };
-
-  // useEffect(() => {
-  //   fetchRepositories();
-  // }, []);
-
-  // Get the nodes from the edges array
-  const repositoryNodes = repositories
+export const RepositoryListContainer = ({
+  repositories,
+  onSortChange,
+  searchQuery,     // 1. Get these from the Container's props
+  setSearchQuery,
+}: RepositoryListContainerProps) => { // Using the interface we created earlier
+  
+  const repositoryNodes = repositories?.edges
     ? repositories.edges.map((edge: Edge) => edge.node)
     : [];
 
   return (
-    <FlatList
-      data={repositoryNodes}
-      ItemSeparatorComponent={ItemSeparator}
-      renderItem={({ item }) => <RepositoryItem item={item} />}
-      keyExtractor={item => item.id}>
-    </FlatList>
+    <>
+      {/* 2. Pass them into the Searchbar component */}
+      <RepoSearchbar 
+        value={searchQuery} 
+        onChangeText={setSearchQuery} 
+      />
+      
+      <SortMenu onSortChange={onSortChange} />
+      
+      <FlatList
+        data={repositoryNodes}
+        ItemSeparatorComponent={ItemSeparator}
+        renderItem={({ item }) => (
+          <Pressable style={{ width: '100%' }} onPress={() => console.log(item.id)}>
+            <RepositoryItem item={item} />
+          </Pressable>
+        )}
+        keyExtractor={item => item.id}
+      />
+    </>
+  );
+};
+
+const RepositoryList = () => {
+  const [orderBy, setOrderBy] = useState('CREATED_AT');
+  const [orderDirection, setOrderDirection] = useState('DESC');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch] = useDebounce(searchQuery, 500);
+  const { repositories }: { repositories: RepositoryData | undefined } = useRepositories(
+    orderBy,
+    orderDirection,
+    debouncedSearch
+  ) as { repositories: RepositoryData | undefined };
+  if (!repositories) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  return (
+    <RepositoryListContainer
+      repositories={repositories}
+      searchQuery={searchQuery}
+      setSearchQuery={setSearchQuery}
+      onSortChange={(value) => {
+        if (value === 'LATEST') {
+          setOrderBy('CREATED_AT');
+          setOrderDirection('DESC');
+        } else if (value === 'HIGHEST_RATED') {
+          setOrderBy('RATING_AVERAGE');
+          setOrderDirection('DESC');
+        } else if (value === 'LOWEST_RATED') {
+          setOrderBy('RATING_AVERAGE');
+          setOrderDirection('ASC');
+        }
+      }}
+    />
   )
 };
 
