@@ -1,24 +1,27 @@
+import { useState, useEffect } from 'react';
 import { Searchbar } from 'react-native-paper';
+import { useDebounce } from 'use-debounce';
 
 interface RepoSearchbarProps {
-  value: string;
-  onChangeText: (text: string) => void;
+  onDebouncedChange: (text: string) => void;
 }
 
-const RepoSearchbar = ({ value, onChangeText }: RepoSearchbarProps) => {
-  // We removed local state because 'value' and 'onChangeText' come from the parent
-  const handleClear = () => {
-    onChangeText(''); 
-  };
+const RepoSearchbar = ({ onDebouncedChange }: RepoSearchbarProps) => {
+  const [value, setValue] = useState('');
+  const [debounced] = useDebounce(value, 500);
+
+  useEffect(() => {
+    onDebouncedChange(debounced);
+  }, [debounced]);
 
   return (
     <Searchbar
       placeholder="Search repo"
-      onChangeText={onChangeText} 
-      onClearIconPress={handleClear}
+      onChangeText={setValue}
+      onClearIconPress={() => setValue('')}
       value={value}
     />
   );
 };
 
-export default RepoSearchbar
+export default RepoSearchbar;
