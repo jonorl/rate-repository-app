@@ -7,8 +7,11 @@ interface ReviewItemProps {
         text: string;
         rating: number;
         createdAt: string;
-        user: {
+        user?: { 
             username: string;
+        };
+        repository?: { // Added for the 'me' query
+            fullName: string;
         };
     };
 }
@@ -115,6 +118,11 @@ const styles = StyleSheet.create({
 
 const ReviewItem = ({ review }: ReviewItemProps) => {
     const formattedDate = format(new Date(review.createdAt), 'dd.MM.yyyy');
+
+    const title = review.user 
+        ? review.user.username 
+        : review.repository?.fullName ?? 'Unknown';
+
     return (
         <View style={styles.container}>
             <View style={styles.ratingContainer}>
@@ -122,7 +130,7 @@ const ReviewItem = ({ review }: ReviewItemProps) => {
             </View>
 
             <View style={styles.contentContainer}>
-                <Text style={styles.usernameText}>{review.user.username}</Text>
+                <Text style={styles.usernameText}>{title}</Text> 
                 <Text style={styles.dateText}>{formattedDate}</Text>
                 <Text style={styles.reviewText}>{review.text}</Text>
             </View>

@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { Text, TextInput, Pressable, View, StyleSheet } from 'react-native';
 import { useFormik } from 'formik';
-import { useRouter } from 'expo-router';
+import { useNavigate } from 'react-router-native';
 import * as yup from 'yup';
-import ReviewRepo from '../hooks/useReviewRepo'
+import ReviewRepo from '../hooks/useReviewRepo';
 
 const styles = StyleSheet.create({
     container: {
@@ -58,7 +59,10 @@ const validationSchema = yup.object().shape({
         .string()
 });
 
-export const ReviewContainer = ({ onSubmit }: { onSubmit: (values: { username: string; repoName: string; rating: number | string; review?: string }) => void }) => {
+export const ReviewContainer = ({ onSubmit, submitError }: {
+    onSubmit: (values: { username: string; repoName: string; rating: string; review?: string }) => void;
+    submitError: string | null;
+}) => {
     const formik = useFormik({
         initialValues: {
             username: '',
@@ -95,6 +99,7 @@ export const ReviewContainer = ({ onSubmit }: { onSubmit: (values: { username: s
             {formik.touched.repoName && formik.errors.repoName && (
                 <Text style={styles.errorText}>{formik.errors.repoName}</Text>
             )}
+
             <Text>Rating (0 to 100)</Text>
             <TextInput
                 testID="rating"
@@ -106,6 +111,7 @@ export const ReviewContainer = ({ onSubmit }: { onSubmit: (values: { username: s
             {formik.touched.rating && formik.errors.rating && (
                 <Text style={styles.errorText}>{formik.errors.rating}</Text>
             )}
+
             <Text>Review (optional)</Text>
             <TextInput
                 testID="review"
@@ -118,6 +124,10 @@ export const ReviewContainer = ({ onSubmit }: { onSubmit: (values: { username: s
                 <Text style={styles.errorText}>{formik.errors.review}</Text>
             )}
 
+            {submitError && (
+                <Text style={styles.errorText}>{submitError}</Text>
+            )}
+
             <Pressable testID="submitButton" style={styles.button} onPress={() => formik.handleSubmit()}>
                 <Text style={styles.buttonText}>Review repo</Text>
             </Pressable>
@@ -126,29 +136,29 @@ export const ReviewContainer = ({ onSubmit }: { onSubmit: (values: { username: s
 };
 
 const submitReview = () => {
-    const [mutateFunction] = ReviewRepo() as any;
-    const router = useRouter();
+    const [review] = ReviewRepo() as any;
+    const navigate = useNavigate();
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
-    const onSubmit = async (values: { username: string; repoName: string; rating: number; review?: string; }) => {
-        const { username, repoName, rating, review } = values;
-
+    const onSubmit = async (values: { username: string; repoName: string; rating: string; review?: string }) => {
+        setSubmitError(null);
         try {
-            const data = await mutateFunction({
-                username,
-                repoName,
-                rating: Number(rating),
-                review,
+            const data = await review({
+                username: values.username,
+                repoName: values.repoName,
+                rating: parseInt(values.rating, 10),
+                review: values.review,
             });
 
-            if (data) {
-                router.replace('/');
+            if (data?.createReview) {
+                navigate(`/repositories/${data.createReview.repositoryId}`);
             }
-        } catch (e) {
-            console.log('Mutation error:', e);
+        } catch (e: any) {
+            setSubmitError(e.message ?? 'Something went wrong. Please try again.');
         }
     };
 
-    return <ReviewContainer onSubmit={onSubmit} />;
+    return <ReviewContainer onSubmit={onSubmit} submitError={submitError} />;
 };
 
 export default submitReview;

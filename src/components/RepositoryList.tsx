@@ -4,6 +4,7 @@ import useRepositories from '../hooks/useRepositories';
 import { useState, useCallback } from 'react';
 import SortMenu from './SortMenu';
 import RepoSearchbar from './RepoSearchbar';
+import { useNavigate } from 'react-router-native'; //
 
 const styles = StyleSheet.create({
   separator: {
@@ -37,6 +38,8 @@ const RepositoryList = () => {
   const [orderBy, setOrderBy] = useState('CREATED_AT');
   const [orderDirection, setOrderDirection] = useState('DESC');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  const navigate = useNavigate();
 
   const { repositories }: { repositories: RepositoryData | undefined } = useRepositories(
     orderBy,
@@ -82,7 +85,7 @@ const RepositoryList = () => {
         </View>
       }
       renderItem={({ item }) => (
-        <Pressable style={{ width: '100%' }} onPress={() => console.log(item.id)}>
+        <Pressable style={{ width: '100%' }} onPress={() => navigate(`/repositories/${item.id}`)}>
           <RepositoryItem item={item} />
         </Pressable>
       )}
