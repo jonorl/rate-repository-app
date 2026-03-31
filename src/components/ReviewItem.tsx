@@ -1,5 +1,7 @@
-import { Text, StyleSheet, View } from 'react-native';
+import { Text, StyleSheet, View, Pressable, Alert } from 'react-native';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-native';
+import useDeleteReview from "../hooks/useDelete"
 
 interface ReviewItemProps {
     review: {
@@ -7,11 +9,12 @@ interface ReviewItemProps {
         text: string;
         rating: number;
         createdAt: string;
-        user?: { 
+        user?: {
             username: string;
         };
-        repository?: { // Added for the 'me' query
+        repository?: {
             fullName: string;
+            id: string;
         };
     };
 }
@@ -114,27 +117,87 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 15,
     },
+    buttonContainer: {
+        flexDirection: 'row',
+        padding: 15,
+        backgroundColor: 'white',
+        gap: 10, // Adds space between the buttons
+    },
+    button: {
+        flex: 1,
+        paddingVertical: 15,
+        borderRadius: 5,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    viewButton: {
+        backgroundColor: '#0366d6',
+    },
+    deleteButton: {
+        backgroundColor: '#d73a4a',
+    },
+    buttonText: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
 });
 
 const ReviewItem = ({ review }: ReviewItemProps) => {
+    const navigate = useNavigate();
+    const [confirmDelete] = useDeleteReview()
     const formattedDate = format(new Date(review.createdAt), 'dd.MM.yyyy');
 
-    const title = review.user 
-        ? review.user.username 
+    const viewRepo = (id: string) => {
+        navigate(`/repositories/${id}`)
+    }
+    const deleteReview = (id:string) => {
+        Alert.alert('Delete Review', 'Are you sure you want to delete this review?', [
+            {
+                text: 'Cancel',
+                style: 'cancel',
+            },
+            { text: 'Delete', onPress: () => {
+                confirmDelete(id)
+            }
+             },
+        ]);
+    }
+
+    const title = review.user
+        ? review.user.username
         : review.repository?.fullName ?? 'Unknown';
 
     return (
-        <View style={styles.container}>
-            <View style={styles.ratingContainer}>
-                <Text style={styles.ratingText}>{review.rating}</Text>
-            </View>
+        <>
+            <View style={styles.container}>
+                <View style={styles.ratingContainer}>
+                    <Text style={styles.ratingText}>{review.rating}</Text>
+                </View>
 
-            <View style={styles.contentContainer}>
-                <Text style={styles.usernameText}>{title}</Text> 
-                <Text style={styles.dateText}>{formattedDate}</Text>
-                <Text style={styles.reviewText}>{review.text}</Text>
+                <View style={styles.contentContainer}>
+                    <Text style={styles.usernameText}>{title}</Text>
+                    <Text style={styles.dateText}>{formattedDate}</Text>
+                    <Text style={styles.reviewText}>{review.text}</Text>
+                </View>
             </View>
-        </View>
+            <View style={styles.buttonContainer}>
+                <Pressable
+                    style={[styles.button, styles.viewButton]}
+                    onPress={() => { review.repository?.id && viewRepo(review.repository?.id)
+                    }}
+                >
+                    <Text style={styles.buttonText}>View repository</Text>
+                </Pressable>
+
+                <Pressable
+                    style={[styles.button, styles.deleteButton]}
+                    onPress={async () => { deleteReview(review.id)}}
+                >
+                    <Text style={styles.buttonText}>Delete review</Text>
+                </Pressable>
+            </View>
+        </>
     );
 };
 

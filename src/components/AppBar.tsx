@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#24292e",
   },
   titleText: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: Fonts.main,
     color: 'white',
     fontWeight: 'bold',
@@ -55,13 +55,13 @@ const AppBar = () => {
     <View style={styles.container}>
       <ScrollView horizontal contentContainerStyle={styles.container}>
         <Link to="/">
-          <Text style={styles.titleText}>Repositories</Text>
+          <Text style={styles.titleText}>Repos</Text>
         </Link>
 
         {authorizedUser ? (
           <>
             <Link to="/review">
-              <Text style={styles.titleText}>Create a Review</Text>
+              <Text style={styles.titleText}>Review</Text>
             </Link>
             <Link to="/myreviews">
               <Text style={styles.titleText}>My Reviews</Text>

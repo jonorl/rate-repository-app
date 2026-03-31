@@ -17,17 +17,17 @@ const ReviewList = () => {
         return <Text>Loading...</Text>;
     }
 
-    const reviews = me.reviews 
-        ? me.reviews.edges.map((edge: any) => edge.node) 
+    const reviews = me.reviews
+        ? me.reviews.edges.map((edge: any) => edge.node)
         : [];
 
     return (
-        <FlatList
-            data={reviews}
-            ItemSeparatorComponent={ItemSeparator}
-            renderItem={({ item }) => <ReviewItem review={item} />}
-            keyExtractor={item => item.id}
-        />
+            <FlatList
+                data={reviews}
+                ItemSeparatorComponent={ItemSeparator}
+                renderItem={({ item }) => <ReviewItem review={item} />}
+                keyExtractor={item => item.id}
+            />
     );
 }
 
