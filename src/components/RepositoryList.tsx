@@ -4,7 +4,7 @@ import useRepositories from '../hooks/useRepositories';
 import { useState, useCallback } from 'react';
 import SortMenu from './SortMenu';
 import RepoSearchbar from './RepoSearchbar';
-import { useNavigate } from 'react-router-native'; //
+import { useNavigate } from 'react-router-native';
 
 const styles = StyleSheet.create({
   separator: {
@@ -41,11 +41,16 @@ const RepositoryList = () => {
 
   const navigate = useNavigate();
 
-  const { repositories }: { repositories: RepositoryData | undefined } = useRepositories(
+  const { repositories, fetchMore }: { repositories: RepositoryData | undefined | any } = useRepositories(
     orderBy,
     orderDirection,
     debouncedSearch
   ) as { repositories: RepositoryData | undefined };
+
+  const onEndReach = () => {
+    fetchMore();
+    console.log('You have reached the end of the list');
+  };
 
   const handleDebouncedChange = useCallback((text: string) => {
     setDebouncedSearch(text);
@@ -73,6 +78,8 @@ const RepositoryList = () => {
       data={repositoryNodes}
       keyExtractor={item => item.id}
       ItemSeparatorComponent={ItemSeparator}
+      onEndReached={onEndReach}
+      onEndReachedThreshold={0.5}
       ListHeaderComponent={
         <>
           <RepoSearchbar onDebouncedChange={handleDebouncedChange} />

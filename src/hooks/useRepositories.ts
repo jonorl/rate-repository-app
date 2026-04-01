@@ -1,5 +1,6 @@
 import { useQuery } from "@apollo/client/react";
-import { GET_REPOSITORIES } from '../graphql/queries';
+import { REPOSITORIES } from '../graphql/queries';
+import { NetworkStatus } from "@apollo/client";
 
 interface RepositoryNode {
   id: string;
@@ -20,21 +21,42 @@ interface RepositoryEdge {
 interface GetRepositoriesData {
   repositories: {
     edges: RepositoryEdge[];
+    pageInfo: PageInfo;
   };
 }
 
+interface PageInfo {
+  endCursor: string;
+  startCursor: string;
+  hasNextPage: boolean;
+}
+
 const useRepositories = (orderBy: string, orderDirection: String, searchKeyword: String) => {
-  // useQuery handles the fetching, loading state, and refetching automatically
-  const { data, loading, refetch } = useQuery<GetRepositoriesData>(GET_REPOSITORIES, {
+  const variables = { orderBy, orderDirection, searchKeyword };
+  const { data, loading, refetch, fetchMore } = useQuery<GetRepositoriesData>(REPOSITORIES, {
     fetchPolicy: 'cache-and-network',
-    variables: { orderBy, orderDirection, searchKeyword },
+    notifyOnNetworkStatusChange: true,
+    variables,
   });
 
-  // Extract the repositories from the data object
-  const repositories = data ? data.repositories : undefined;
+  const handleFetchMore = () => {
+    const canFetchMore = !loading && data?.repositories.pageInfo.hasNextPage;
+
+    if (!canFetchMore) {
+      return;
+    }
+
+    fetchMore({
+      variables: {
+        after: data.repositories.pageInfo.endCursor,
+        ...variables,
+      },
+    });
+  };
 
   return { 
     repositories: data?.repositories, 
+    fetchMore: handleFetchMore,
     loading, 
     refetch 
   };

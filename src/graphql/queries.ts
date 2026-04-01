@@ -62,11 +62,11 @@ query GetRepository($id: ID!) {
 }`
 
 export const GET_REVIEWS = gql`
-query GetReviews($id: ID!) {
+query GetReviews($id: ID! $after: String) {
   repository(id: $id) {
     id
       fullName
-      reviews {
+      reviews(first:4, after: $after) {
         edges {
           node {
             id
@@ -78,9 +78,15 @@ query GetReviews($id: ID!) {
               username
             }
           }
+        cursor
         }
+      pageInfo {
+        endCursor
+        startCursor
+        hasNextPage
       }
     }
+  }
 }`
 
 export const SEARCH_KEYWORD = gql`
@@ -94,4 +100,30 @@ query searchKeyword($searchKeyword:String)
       }
     }
   }
+}`
+
+export const REPOSITORIES = gql`
+  query repositories($orderBy: AllRepositoriesOrderBy, $orderDirection: OrderDirection, $searchKeyword: String, $after: String){
+    repositories(orderBy: $orderBy, orderDirection: $orderDirection, searchKeyword: $searchKeyword,first:4, after: $after) {
+      totalCount
+      edges {
+        node {
+          id
+          fullName
+          description
+          language
+          forksCount
+          stargazersCount
+          ratingAverage
+          reviewCount
+          ownerAvatarUrl
+        }
+        cursor
+      }
+      pageInfo {
+        endCursor
+        startCursor
+        hasNextPage
+      }
+    }
 }`
